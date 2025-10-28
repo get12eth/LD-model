@@ -134,6 +134,9 @@ def preprocess_input(data, scaler, encoder):
 
     #Identify numeric and categorical columns
 
+
+    
+
     numerical_cols = list(processed_data.select_dtypes(include=[np.number]).columns)
     categorical_cols = [c for c in processed_data.columns if c not in numerical_cols]
 
