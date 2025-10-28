@@ -94,12 +94,13 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 @st.cache_resource
+
 def load_components():
     """Load the trained model and preprocessing components"""
     try:
-        model = joblib.load('C:/Users/GetnetBantie/Documents/PROJECTS/loan_default_model.pkl')
-        scaler = joblib.load('C:/Users/GetnetBantie/Documents/PROJECTS/standard_scaler.pkl')
-        encoder = joblib.load('C:/Users/GetnetBantie/Documents/PROJECTS/label_encoder.pkl')
+        model = joblib.load('models/loan_default_model.pkl')
+        scaler = joblib.load('models/standard_scaler.pkl')
+        encoder = joblib.load('models/label_encoder.pkl')
         
         #Test the model with a simple prediction to verify it works
 
@@ -115,6 +116,7 @@ def load_components():
         with st.expander("Load Error Details"):
             st.code(traceback.format_exc())
         return None, None, None
+
 
 
 def preprocess_input(data, scaler, encoder):
@@ -136,6 +138,7 @@ def preprocess_input(data, scaler, encoder):
     categorical_cols = [c for c in processed_data.columns if c not in numerical_cols]
 
     #First, handle categorical columns: try to use provided encoder, else factorize
+
     if len(categorical_cols) > 0:
         for col in categorical_cols:
             try:
@@ -149,6 +152,7 @@ def preprocess_input(data, scaler, encoder):
                         try:
                             transformed = encoder.transform(processed_data[[col]])
                         except Exception:
+
                             #As a last resort, try transforming the whole df and then pick the
                             #column by name/index if possible
                             transformed = encoder.transform(processed_data)
@@ -160,14 +164,14 @@ def preprocess_input(data, scaler, encoder):
                             elif transformed.shape[1] == 1:
                                 processed_data[col] = transformed.ravel()
                             else:
-                                #Multiple columns produced; fall back to factorize for this col
+    #Multiple columns produced; fall back to factorize for this col
                                 processed_data[col], _ = pd.factorize(processed_data[col])
                 else:
-                    #No encoder provided: fallback to factorize
+    #No encoder provided: fallback to factorize
                     processed_data[col], _ = pd.factorize(processed_data[col])
             except Exception:
 
-                #If any transform fails, fallback to pandas factorize
+    #If any transform fails, fallback to pandas factorize
 
                 processed_data[col], _ = pd.factorize(processed_data[col])
 
@@ -188,11 +192,14 @@ def preprocess_input(data, scaler, encoder):
             processed_data[numerical_cols] = scaler.transform(processed_data[numerical_cols])
         except Exception:
 
-            #If scaler.transform fails, leave numeric columns as-is so calling code can debug
+    #If scaler.transform fails, leave numeric columns as-is so calling code can debug
 
             pass
 
     return processed_data
+
+
+
 
 
 def align_features(df: pd.DataFrame, model):
@@ -216,11 +223,13 @@ def align_features(df: pd.DataFrame, model):
 
         for col in expected:
                 if col not in df_copy.columns:
-                        # Choose a sensible default: 0 for numeric-like names, empty string otherwise
+
+#Choose a sensible default: 0 for numeric-like names, empty string otherwise
                         df_copy[col] = 0 if df_copy.select_dtypes(include=[np.number]).columns.size else ''
 
-        # Reorder and return only expected columns
+#Reorder and return only expected columns
         return df_copy[expected]
+
 
 
 def create_feature_explanation():
@@ -243,9 +252,10 @@ def create_feature_explanation():
     return feature_info
 
 
+
 def main():
 
-    #Header
+#Header
 
     st.markdown('<h1 class="main-header">🏦 Loan Default Risk Predictor</h1>', unsafe_allow_html=True)
     model, scaler, encoder = load_components()
@@ -269,14 +279,15 @@ def single_prediction(model, scaler, encoder):
     st.header("📊 Single Loan Application Assessment")
 
 
-    #Main layout: input form on the left, help/feature info on the right
+#Main layout: input form on the left, help/feature info on the right
     
 
     left, right = st.columns([2, 1])
 
     with left:
 
-        #Use a form so inputs are submitted together; the submit button is a true form button
+
+#Use a form so inputs are submitted together; the submit button is a true form button
 
 
 
@@ -312,8 +323,7 @@ def single_prediction(model, scaler, encoder):
                     construction_type = st.selectbox("Construction Type", ["mc", "sb"]) 
                     occupancy_type = st.selectbox("Occupancy Type", ["pr", "sr", "ir"]) 
                     security_type = st.selectbox("Security Type", ["direct", "Indriect"]) 
-
-            #Center the submit button visually
+#Center the submit button visually
 
             btn_col1, btn_col2, btn_col3 = st.columns([1, 2, 1])
             with btn_col2:
@@ -327,7 +337,7 @@ def single_prediction(model, scaler, encoder):
             st.markdown(f"**{k}** — {v}")
 
 
-    #Handle form submission
+#Handle form submission
 
 
     if submit:
@@ -367,7 +377,9 @@ def single_prediction(model, scaler, encoder):
 
         input_df = pd.DataFrame(input_data)
         
-        #Debug: Show input values being used
+
+
+#Debug: Show input values being used
 
         with st.expander("🔍 Debug: View Input Data"):
             st.write("**Key Input Values:**")
@@ -386,11 +398,13 @@ def single_prediction(model, scaler, encoder):
                 st.write(f"Age Group: {age}")
 
         try:
-            #Align features to the model's expectations (fills missing columns)
+
+#Align features to the model's expectations (fills missing columns)
 
             input_df_aligned = align_features(input_df, model)
             
-            #Debug: Show aligned data
+
+#Debug: Show aligned data
 
             with st.expander("🔬 Debug: Aligned Features"):
                 st.write("Before alignment shape:", input_df.shape)
@@ -400,20 +414,20 @@ def single_prediction(model, scaler, encoder):
             processed_input = preprocess_input(input_df_aligned, scaler, encoder)
             
 
-            #Debug: Show processed data
+#Debug: Show processed data
 
 
             with st.expander("🔬 Debug: Processed Features (After Scaling)"):
                 st.write("Processed shape:", processed_input.shape)
                 st.dataframe(processed_input)
             
-            #Make predictions
+#Make predictions
 
             prediction = model.predict(processed_input)[0]
             probability = model.predict_proba(processed_input)[0]
             
 
-            #Debug: Show raw model outputs
+#Debug: Show raw model outputs
 
             with st.expander("🔬 Debug: Raw Model Output"):
                 st.write(f"Prediction: {prediction}")
@@ -428,7 +442,7 @@ def single_prediction(model, scaler, encoder):
             st.info("Please check that all input values are within expected ranges.")
 
 
-            #Show detailed error information for debugging
+#Show detailed error information for debugging
 
 
 
@@ -441,6 +455,7 @@ def single_prediction(model, scaler, encoder):
                 st.write("Input data shape:", input_df.shape)
                 st.write("Input data columns:", list(input_df.columns))
 
+
     
 #(Legacy direct button removed. Use the form's "Predict Default Risk" submit button.)
 
@@ -452,16 +467,17 @@ def display_prediction_results(prediction, probability, input_data):
     default_prob = probability[1]  
 
 
-    #Probability of default (class 1)
+#Probability of default (class 1)
     
 
-    #Create columns for results
+#Create columns for results
 
     col1, col2 = st.columns(2)
     
     with col1:
 
-        #Risk gauge chart
+
+#Risk gauge chart
 
         fig = go.Figure(go.Indicator(
             mode = "gauge+number+delta",
@@ -511,8 +527,11 @@ def display_prediction_results(prediction, probability, input_data):
                 <p>This application appears to be low risk.</p>
             </div>
             """, unsafe_allow_html=True)
+
         
         #Key metrics
+
+
 
         st.subheader("Key Metrics")
         col_a, col_b, col_c = st.columns(3)
@@ -527,6 +546,8 @@ def display_prediction_results(prediction, probability, input_data):
             st.metric("LTV Ratio", f"{input_data['LTV'].iloc[0]:.1f}%")
             
 
+
+
 def batch_prediction(model, scaler, encoder):
     """Batch prediction interface"""
     st.header("📁 Batch Loan Applications")
@@ -540,8 +561,6 @@ def batch_prediction(model, scaler, encoder):
 
             #Read the uploaded file
 
-
-
             batch_data = pd.read_csv(uploaded_file)
             st.write("Preview of uploaded data:")
             st.dataframe(batch_data.head())
@@ -549,27 +568,35 @@ def batch_prediction(model, scaler, encoder):
             if st.button("Process Batch Predictions"):
                 with st.spinner("Processing batch predictions..."):
 
-                    #Preprocess and predict
+
+            #Preprocess and predict
+
 
                     batch_data = align_features(batch_data, model)
                     processed_data = preprocess_input(batch_data, scaler, encoder)
                     predictions = model.predict(processed_data)
                     probabilities = model.predict_proba(processed_data)
+
+
                     
-                    #Add predictions to dataframe
+            #Add predictions to dataframe
+
+
 
                     results_df = batch_data.copy()
                     results_df['Default_Prediction'] = predictions
                     results_df['Default_Probability'] = probabilities[:, 1]
                     results_df['Risk_Level'] = np.where(predictions == 1, 'High Risk', 'Low Risk')
                     
-                    #display results
+
+
+            #display results
 
 
                     st.subheader("Batch Prediction Results")
 
                     
-                    #Summary statistics
+            #Summary statistics
 
 
                     col1, col2, col3 = st.columns(3)
@@ -582,13 +609,13 @@ def batch_prediction(model, scaler, encoder):
                         st.metric("Approval Rate", 
                                  f"{(len(results_df[results_df['Default_Prediction'] == 0]) / len(results_df)):.1%}")
                     
-                    #Show results table
+            #Show results table
 
 
                     st.dataframe(results_df)
                     
 
-                    #Download button
+            #Download button
 
                     csv = results_df.to_csv(index=False)
                     st.download_button(
@@ -600,6 +627,7 @@ def batch_prediction(model, scaler, encoder):
                     
         except Exception as e:
             st.error(f"Error processing file: {str(e)}")
+
 
 
 
@@ -632,7 +660,8 @@ def model_info():
         
         for feature, description in list(feature_info.items())[:10]: 
             
-            #Show first 10
+
+    #Show first 10
 
             with st.container():
                 st.markdown(f"**{feature}**: {description}")
@@ -640,7 +669,7 @@ def model_info():
     st.subheader("Model Performance")
 
     
-    # Placeholder for model metrics - you can replace with actual metrics from your notebook
+    #Placeholder for model metrics - you can replace with actual metrics from your notebook
     
 
     metrics_col1, metrics_col2, metrics_col3, metrics_col4 = st.columns(4)
