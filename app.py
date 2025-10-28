@@ -135,7 +135,7 @@ def preprocess_input(data, scaler, encoder):
     #Identify numeric and categorical columns
 
 
-    
+
 
     numerical_cols = list(processed_data.select_dtypes(include=[np.number]).columns)
     categorical_cols = [c for c in processed_data.columns if c not in numerical_cols]
@@ -327,6 +327,9 @@ def single_prediction(model, scaler, encoder):
                     occupancy_type = st.selectbox("Occupancy Type", ["pr", "sr", "ir"]) 
                     security_type = st.selectbox("Security Type", ["direct", "Indriect"]) 
 #Center the submit button visually
+
+
+ 
 
             btn_col1, btn_col2, btn_col3 = st.columns([1, 2, 1])
             with btn_col2:
