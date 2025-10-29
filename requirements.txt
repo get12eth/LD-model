@@ -1,3 +1,4 @@
+# Dependencies for Loan Default Prediction App
 streamlit>=1.28.0
 pandas>=2.0.3
 numpy>=1.26.0
