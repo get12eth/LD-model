@@ -90,6 +90,7 @@ st.markdown("""
     .stSelectbox label, .stNumberInput label, .stSlider label {
         font-size: 0.9rem !important;
     }
+    
 </style>
 """, unsafe_allow_html=True)
 
@@ -98,9 +99,9 @@ st.markdown("""
 def load_components():
     """Load the trained model and preprocessing components"""
     try:
-        model = joblib.load('models/loan_default_model.pkl')
-        scaler = joblib.load('models/standard_scaler.pkl')
-        encoder = joblib.load('models/label_encoder.pkl')
+        model = joblib.load('models/model.pkl')
+        scaler = joblib.load('models/scaler.pkl')
+        encoder = joblib.load('models/label_encoders.pkl')
         
         #Test the model with a simple prediction to verify it works
 
@@ -118,7 +119,6 @@ def load_components():
         return None, None, None
 
 
-
 def preprocess_input(data, scaler, encoder):
 
     """Preprocess the input data similar to training pipeline.
@@ -133,9 +133,6 @@ def preprocess_input(data, scaler, encoder):
     processed_data = data.copy()
 
     #Identify numeric and categorical columns
-
-
-
 
     numerical_cols = list(processed_data.select_dtypes(include=[np.number]).columns)
     categorical_cols = [c for c in processed_data.columns if c not in numerical_cols]
@@ -167,6 +164,7 @@ def preprocess_input(data, scaler, encoder):
                             elif transformed.shape[1] == 1:
                                 processed_data[col] = transformed.ravel()
                             else:
+
     #Multiple columns produced; fall back to factorize for this col
                                 processed_data[col], _ = pd.factorize(processed_data[col])
                 else:
@@ -200,9 +198,6 @@ def preprocess_input(data, scaler, encoder):
             pass
 
     return processed_data
-
-
-
 
 
 def align_features(df: pd.DataFrame, model):
@@ -326,6 +321,8 @@ def single_prediction(model, scaler, encoder):
                     construction_type = st.selectbox("Construction Type", ["mc", "sb"]) 
                     occupancy_type = st.selectbox("Occupancy Type", ["pr", "sr", "ir"]) 
                     security_type = st.selectbox("Security Type", ["direct", "Indriect"]) 
+
+
 #Center the submit button visually
 
 
@@ -464,6 +461,7 @@ def single_prediction(model, scaler, encoder):
 
     
 #(Legacy direct button removed. Use the form's "Predict Default Risk" submit button.)
+
 
 
 
