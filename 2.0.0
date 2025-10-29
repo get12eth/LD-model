@@ -1,0 +1,9 @@
+Collecting xgboost
+  Obtaining dependency information for xgboost from https://files.pythonhosted.org/packages/b8/90/f082b89dd74da8ca27f8a3c7b3e38fc8529a4a14eb2c5b0937c7d66aa922/xgboost-3.1.1-py3-none-win_amd64.whl.metadata
+  Downloading xgboost-3.1.1-py3-none-win_amd64.whl.metadata (2.1 kB)
+Requirement already satisfied: numpy in c:\users\getnetbantie\documents\projects\md\.venv\lib\site-packages (from xgboost) (1.26.4)
+Requirement already satisfied: scipy in c:\users\getnetbantie\documents\projects\md\.venv\lib\site-packages (from xgboost) (1.16.2)
+Downloading xgboost-3.1.1-py3-none-win_amd64.whl (72.0 MB)
+   ---------------------------------------- 72.0/72.0 MB ? eta 0:00:00
+Installing collected packages: xgboost
+Successfully installed xgboost-3.1.1
