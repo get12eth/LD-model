@@ -94,19 +94,13 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-@st.cache_resource
-
+@st.cache_resource(hash_funcs={"builtins.module": id})
 def load_components():
     """Load the trained model and preprocessing components"""
     try:
         model = joblib.load('models/model.pkl')
         scaler = joblib.load('models/scaler.pkl')
         encoder = joblib.load('models/label_encoders.pkl')
-        
-        #Test the model with a simple prediction to verify it works
-
-        st.sidebar.info(f"Model loaded: {type(model).__name__}")
-        st.sidebar.info(f"Model has {len(model.estimators_)} estimators" if hasattr(model, 'estimators_') else "Model type unknown")
         
         return model, scaler, encoder
     except FileNotFoundError:
@@ -222,11 +216,19 @@ def align_features(df: pd.DataFrame, model):
         for col in expected:
                 if col not in df_copy.columns:
 
+
+
+
+
 #Choose a sensible default: 0 for numeric-like names, empty string otherwise
+
                         df_copy[col] = 0 if df_copy.select_dtypes(include=[np.number]).columns.size else ''
 
 #Reorder and return only expected columns
+
         return df_copy[expected]
+
+
 
 
 
@@ -256,9 +258,24 @@ def main():
 #Header
 
     st.markdown('<h1 class="main-header">🏦 Loan Default Risk Predictor</h1>', unsafe_allow_html=True)
+    
+    #Add cache clearing button in sidebar
+
+    if st.sidebar.button("🔄 Clear Cache & Reload Model"):
+        st.cache_resource.clear()
+        st.rerun()
+    
     model, scaler, encoder = load_components()
     if model is None:
         return
+    
+    # Display model info after loading
+    st.sidebar.info(f"Model: {type(model).__name__}")
+    if hasattr(model, 'estimators_'):
+        st.sidebar.info(f"Estimators: {len(model.estimators_)}")
+    if hasattr(model, 'predict_proba'):
+        st.sidebar.success("✅ predict_proba available")
+    
     st.sidebar.title("Navigation")
     app_mode = st.sidebar.selectbox("Choose App Mode", ["Single Prediction", "Batch Prediction", "Model Info"]) 
     if app_mode == "Single Prediction":
@@ -267,6 +284,7 @@ def main():
         batch_prediction(model, scaler, encoder)
     else:
         model_info()
+
 
 
 
@@ -409,6 +427,7 @@ def single_prediction(model, scaler, encoder):
 
 #Debug: Show aligned data
 
+
             with st.expander("🔬 Debug: Aligned Features"):
                 st.write("Before alignment shape:", input_df.shape)
                 st.write("After alignment shape:", input_df_aligned.shape)
@@ -416,28 +435,38 @@ def single_prediction(model, scaler, encoder):
             
             processed_input = preprocess_input(input_df_aligned, scaler, encoder)
             
-
-#Debug: Show processed data
-
+            # Debug: Show processed data
 
             with st.expander("🔬 Debug: Processed Features (After Scaling)"):
                 st.write("Processed shape:", processed_input.shape)
                 st.dataframe(processed_input)
             
-#Make predictions
-
+            # Make predictions
             prediction = model.predict(processed_input)[0]
-            probability = model.predict_proba(processed_input)[0]
             
-
-#Debug: Show raw model outputs
-
+            # Try to get probabilities with error handling
+            try:
+                probability = model.predict_proba(processed_input)[0]
+            except Exception as prob_error:
+                st.error(f"Error getting probabilities: {str(prob_error)}")
+                # Fallback: use prediction as binary probability
+                probability = np.array([1.0 - prediction, prediction])
+            
+            # Debug: Show raw model outputs
             with st.expander("🔬 Debug: Raw Model Output"):
                 st.write(f"Prediction: {prediction}")
                 st.write(f"Probability array: {probability}")
                 st.write(f"Probability shape: {probability.shape}")
                 st.write(f"Class 0 (No Default): {probability[0]:.4f}")
                 st.write(f"Class 1 (Default): {probability[1]:.4f}")
+                st.write(f"Sum of probabilities: {probability.sum():.4f}")
+                
+                # Additional diagnostics
+                st.write("\n**Model Diagnostics:**")
+                st.write(f"Model type: {type(model).__name__}")
+                st.write(f"Has predict_proba: {hasattr(model, 'predict_proba')}")
+                if hasattr(model, 'predict_proba'):
+                    st.write(f"predict_proba type: {type(model.predict_proba)}")
             
             display_prediction_results(prediction, probability, input_df)
         except Exception as e:
@@ -446,6 +475,9 @@ def single_prediction(model, scaler, encoder):
 
 
 #Show detailed error information for debugging
+
+
+
 
 
 
